@@ -1,0 +1,118 @@
+{
+  "dev": {
+    "cognito": {
+      "userpoolName": "CognitoUserPool-23MMowOhzsL8",
+      "userpoolId": "us-east-1_UrF405O2x",
+      "clients": {
+        "student-app": "7rh8bdiro4v34cphsdetnshmat",
+        "student-app-redirect": "https://d1tqco0ucxdk0l.cloudfront.net",
+​
+        "student-local-app": "3lrrlh8ej6tsrk6349hv5q2p07",
+        "student-local-app-redirect": "http://localhost:3000",
+        
+        "teacher-app": "37be4cluus0ronp3f8423sai5p",
+        "teacher-app-redirect": "https://d3exxk33g72wze.cloudfront.net",
+​
+        "teacher-local-app": "19kanckk63gtum0n0jnm0nu70f",
+        "teacher-local-app-redirect": "http://localhost:3000"
+      },
+      "SAMLProviderName": "FUSD-Microsoft-Login",
+      "domain": "fusd-be-dev"
+    },
+    "appSync": {
+      "apiUrl": "https://3ut2onoqrfeehodfqxdr7rek4m.appsync-api.us-east-1.amazonaws.com/graphql",
+      "region": "us-east-1",
+      "authMode": "AMAZON_COGNITO_USER_POOLS"
+    },
+    "s3": {
+      "audio-files-bucket": "fusd-web-assets-dev"
+    }
+  },
+  "prod": {
+    "cognito": {
+      "userpoolName": "CognitoUserPool-Qa79H2lq6QYX",
+      "userpoolId": "us-east-1_XgE6zgpMv",
+      "clients": {
+        "student-app": "2rm0doeeqqcbl2cppnb2v8nfsm",
+        "student-app-redirect": "https://d3fe0ggggs4v89.cloudfront.net",
+​
+        "student-local-app": "2vrk4irdtprhv026lme2iqmi7h",
+        "student-local-app-redirect": "http://localhost:3000",
+        
+        "teacher-app": "12iqo17v6brv9scpq37suohdvh",
+        "teacher-app-redirect": "https://d3oqo2dovrecha.cloudfront.net",
+​
+        "teacher-local-app": "1moa92b3jdvu8mi99c7jk24nuk",
+        "teacher-local-app-redirect": "http://localhost:3000"
+      },
+      "SAMLProviderName": "FUSD-Microsoft-Login",
+      "domain": "fusd-survey"
+    },
+    "appSync": {
+      "apiUrl": "https://benduyxmrbd53gsqgeudkdl6kq.appsync-api.us-east-1.amazonaws.com/graphql",
+      "region": "us-east-1",
+      "authMode": "AMAZON_COGNITO_USER_POOLS"
+    },
+    "s3": {
+      "audio-files-bucket": "fusd-web-assets-prod"
+    }
+  },
+  "production": {
+    "cognito": {
+      "userpoolName": "CognitoUserPool-ulWfrKC99p89",
+      "userpoolId": "us-west-1_wQKSyXyvM",
+      "clients": {
+        "student-app": "5m2a4ng3oj72pcnmoeiekm3r2u",
+        "student-app-redirect": "https://d2latpbm4z7tpa.cloudfront.net",
+​
+        "student-local-app": "mt7cji4njm7ovobtjjbvgdee2",
+        "student-local-app-redirect": "http://localhost:3000",
+        
+        "teacher-app": "1qnpdii7t078b7agmq1squgfno",
+        "teacher-app-redirect": "https://d1pusi6u970l0j.cloudfront.net ",
+​
+        "teacher-local-app": "6tctis63bvlfpoo3e5plikquhq",
+        "teacher-local-app-redirect": "http://localhost:3000"
+      },
+      "SAMLProviderName": "FUSD-Microsoft-Login",
+      "domain": "fusd-survey-pro"
+    },
+    "appSync": {
+      "apiUrl": "https://ig6nilppmzcbpbi7i35dgbndme.appsync-api.us-west-1.amazonaws.com/graphql",
+      "region": "us-east-1",
+      "authMode": "AMAZON_COGNITO_USER_POOLS"
+    },
+    "s3": {
+      "audio-files-bucket": "fusd-web-assets-production"
+    }
+  },
+  "latest": {
+    "cognito": {
+      "userpoolName": "CognitoUserPool-FwAiDeJNUhwd",
+      "userpoolId": "us-west-2_1sLXFdRgG",
+      "clients": {
+        "student-app": "6utafurp6gq3tj6esjeqdf1mcr",
+        "student-app-redirect": "https://dwitwcaxabczs.cloudfront.net",
+​
+        "student-local-app": "3ed4kgo9i28pto0cmqt8748mop",
+        "student-local-app-redirect": "http://localhost:3000",
+        
+        "teacher-app": "7d8e4e13lpji4rc0n0aphl2in2",
+        "teacher-app-redirect": "https://dlr7asq96155y.cloudfront.net",
+​
+        "teacher-local-app": "4t2adtb4mbnek2jhvvh3jki2lj",
+        "teacher-local-app-redirect": "http://localhost:3000"
+      },
+      "SAMLProviderName": "FUSD-Microsoft-Login",
+      "domain": "fusd-survey"
+    },
+    "appSync": {
+      "apiUrl": "https://rmyj2qrq25byfifrkdm4uylboy.appsync-api.us-west-2.amazonaws.com/graphql",
+      "region": "us-west-2",
+      "authMode": "AMAZON_COGNITO_USER_POOLS"
+    },
+    "s3": {
+      "audio-files-bucket": "fusd-survey-qaudios-latest"
+    }
+  }
+}

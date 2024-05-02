@@ -1,0 +1,7 @@
+{
+  "BUCKET_NAME": "fusd-fe-teachers",
+  "REPOSITORY_NAME":"fusd-fe-teachers",
+  "BRANCH_NAME":"master",
+  "ACM_CERT_ARN": "<ARN OF ACM CERTIFICATE REGION us-east-1>",
+  "DOMAIN_NAME": "<DOMAIN_NAME>"
+}

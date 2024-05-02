@@ -1,0 +1,121 @@
+{
+  "name": "my_share",
+  "version": "3.2.1",
+  "description": "My Share",
+  "homepage": ".",
+  "copyright": "Copyright 2017-2020 creativeLabs Łukasz Holeczek",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:coreui/coreui-free-react-admin-template.git"
+  },
+  "dependencies": {
+    "@babel/preset-env": "^7.15.0",
+    "@babel/preset-react": "^7.14.5",
+    "@coreui/chartjs": "^2.0.0",
+    "@coreui/coreui": "^3.4.0",
+    "@coreui/icons": "^2.0.0",
+    "@coreui/icons-react": "^1.1.0",
+    "@coreui/react": "^3.4.6",
+    "@coreui/react-chartjs": "^1.1.0",
+    "@coreui/utils": "^1.3.1",
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@material-ui/core": "^4.12.3",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.60",
+    "@material-ui/styles": "^4.11.4",
+    "@mui/material": "^5.5.3",
+    "@reduxjs/toolkit": "^1.6.1",
+    "@wojtekmaj/enzyme-adapter-react-17": "^0.6.0",
+    "aws-amplify": "^4.2.9",
+    "babel-loader": "^8.2.2",
+    "bootstrap": "^5.1.0",
+    "bootstrap-daterangepicker": "^3.1.0",
+    "chart.js": "^3.5.1",
+    "chartjs-plugin-datalabels": "^2.0.0",
+    "classnames": "^2.2.6",
+    "core-js": "^3.9.1",
+    "env-cmd": "^10.1.0",
+    "enzyme": "^3.11.0",
+    "formik": "^2.2.9",
+    "moment": "^2.29.1",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-app-polyfill": "^2.0.0",
+    "react-bootstrap": "1.0.1",
+    "react-bootstrap-daterangepicker": "^7.0.0",
+    "react-chartjs-2": "^3.0.4",
+    "react-dom": "^17.0.2",
+    "react-drag-drop-files": "^2.3.4",
+    "react-dropzone": "^12.0.4",
+    "react-redux": "^7.2.3",
+    "react-router-dom": "^5.2.0",
+    "react-scripts-plugin-no-hashes": "^0.4.0",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.9",
+    "sass": "^1.32.8",
+    "yup": "^0.32.9"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
+    "@babel/preset-react": "^7.14.5",
+    "auto-changelog": "~2.2.1",
+    "babel-loader": "^8.2.2",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^3.2.0",
+    "mini-css-extract-plugin": "^2.2.2",
+    "postcss": "^8.3.6",
+    "postcss-loader": "^6.1.1",
+    "react-scripts": "^4.0.3",
+    "sass": "^1.38.1",
+    "sass-loader": "^10.2.0",
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.6"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "prod-build-cf": "env-cmd -f .env.prod.cf react-scripts build",
+    "latest-build-cf": "env-cmd -f .env.latest.cf react-scripts build",
+    "start:prod-cf": "env-cmd -f .env.prod.cf npm run start",
+    "start:latest-cf": "env-cmd -f .env.latest.cf npm run start",
+    "prod-build-local": "env-cmd -f .env.prod.local react-scripts build",
+    "latest-build-local": "env-cmd -f .env.latest.local react-scripts build",
+    "start:prod-local": "env-cmd -f .env.prod.local npm run start",
+    "start:latest-local": "env-cmd -f .env.latest.local npm run start",
+    "push": "git push latest master",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "test:cov": "npm test -- --coverage --watchAll=false",
+    "test:debug": "react-scripts --inspect-brk test --runInBand",
+    "eject": "react-scripts eject",
+    "changelog": "auto-changelog --starting-version 3.0.0 --commit-limit false --hide-credit"
+  },
+  "bugs": {
+    "url": "https://github.com/coreui/coreui-free-react-admin-template/issues12"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 10",
+    "not op_mini all"
+  ],
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx}",
+      "!**/*index.js",
+      "!src/serviceWorker.js",
+      "!src/polyfill.js"
+    ]
+  },
+  "engines": {
+    "node": ">=10",
+    "npm": ">=6"
+  }
+}

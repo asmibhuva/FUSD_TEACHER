@@ -1,0 +1,378 @@
+service: fusd-fe-teachers
+frameworkVersion: "2"
+
+provider: # Basic configuration with IAM Role for Lambda
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+
+custom: # Sevice parameters
+  bucket-name: ${file(./config.${opt:stage, 'dev'}.json):BUCKET_NAME}-${opt:stage} # S3 Bucket Name
+  RepositoryName: ${file(./config.${opt:stage, 'dev'}.json):REPOSITORY_NAME}
+  BranchName: ${file(./config.${opt:stage, 'dev'}.json):BRANCH_NAME}
+  acm-cert-arn: ${file(./config.${opt:stage, 'dev'}.json):ACM_CERT_ARN} # ACM Certificate ID
+  alternate-domain: ${file(./config.${opt:stage, 'dev'}.json):DOMAIN_NAME}
+  randomPrefix: 1
+
+package: # Remove files that are not needed in Lambda package
+  individually: true
+  excludeDevDependencies: false
+  exclude:
+    - app/**
+    - .gitignore
+    - "*.md"
+    - node_modules/**
+    - assets/**
+
+resources: # AWS Resources
+  Resources:
+    S3SiteBucket: # Host website content in this bucket
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucket-name}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+              AllowedOrigins:
+                - "*"
+              ExposedHeaders:
+                - Date
+              Id: myCORSRuleId1
+              MaxAge: 3600
+
+    OriginAccessIdentity:
+      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: !Sub "OriginAccessIdentity for ${S3SiteBucket}"
+
+    BucketPolicy: # Allow site access from CloudFront only
+      DependsOn: OriginAccessIdentity
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: OriginBucketPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                CanonicalUser: !GetAtt OriginAccessIdentity.S3CanonicalUserId
+              Action: "s3:GetObject"
+              Resource: !Sub "arn:aws:s3:::${S3SiteBucket}/*"
+        Bucket: !Ref S3SiteBucket
+
+    CloudFrontDistro: # To serve the website via CDN
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName: ${self:custom.bucket-name}.s3.amazonaws.com
+              Id: myS3Origin
+              S3OriginConfig:
+                OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OriginAccessIdentity}"
+          Enabled: true
+          HttpVersion: "http2"
+          Aliases:
+            - ${self:custom.alternate-domain}
+          Comment: "fusd-fe-teachers web"
+          DefaultRootObject: index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            DefaultTTL: 300
+            ForwardedValues:
+              Headers:
+                - Accept
+                - Referer
+                - Authorization
+                - Content-Type
+              QueryString: true
+            MaxTTL: 300
+            TargetOriginId: myS3Origin
+            ViewerProtocolPolicy: redirect-to-https
+          PriceClass: "PriceClass_100"
+          ViewerCertificate:
+            AcmCertificateArn: ${self:custom.acm-cert-arn}
+            MinimumProtocolVersion: TLSv1.2_2018
+            SslSupportMethod: sni-only
+          CustomErrorResponses:
+            - ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: "/index.html"
+            - ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: "/index.html"
+
+    DeployBucket:
+      Type: "AWS::S3::Bucket"
+      DeletionPolicy: Delete
+      Properties:
+        AccessControl: Private
+        VersioningConfiguration:
+          Status: Suspended
+
+    CodePipeline:
+      Type: "AWS::CodePipeline::Pipeline"
+      Properties:
+        ArtifactStore:
+          Type: S3
+          Location: !Ref DeployBucket
+        RoleArn: !GetAtt
+          - CodePipelineServiceRole
+          - Arn
+        Stages:
+          - Name: Source
+            Actions:
+              - Name: Get-sources
+                ActionTypeId:
+                  Category: Source
+                  Owner: AWS
+                  Provider: CodeCommit
+                  Version: "1"
+                OutputArtifacts:
+                  - Name: code-artifact
+                Configuration:
+                  BranchName: ${self:custom.BranchName}
+                  RepositoryName: ${self:custom.RepositoryName}
+                  PollForSourceChanges: false
+                RunOrder: 1
+          - Name: development
+            Actions:
+              - Name: Deploy-to-development
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Provider: CodeBuild
+                  Version: "1"
+                RunOrder: 1
+                Configuration:
+                  ProjectName: Deploy-to-development-${opt:stage}-${self:custom.randomPrefix}
+                InputArtifacts:
+                  - Name: code-artifact
+
+    DeployTodevelopment:
+      Type: "AWS::CodeBuild::Project"
+      Properties:
+        Name: Deploy-to-development-${opt:stage}-${self:custom.randomPrefix}
+        ServiceRole: !GetAtt
+          - CodePipelineServiceRole
+          - Arn
+        Artifacts:
+          Type: CODEPIPELINE
+        Environment:
+          Type: LINUX_CONTAINER
+          ComputeType: BUILD_GENERAL1_MEDIUM
+          Image: "aws/codebuild/standard:4.0"
+          EnvironmentVariables:
+            - Name: environment
+              Value: development
+        Source:
+          Type: CODEPIPELINE
+          BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - echo creating .env file
+                  - echo -e "NODE_PATH=./src \nSKIP_PREFLIGHT_CHECK=true" > .env
+                  - cat .env
+                  - ls -al
+                  - npm install
+              build:
+                commands:
+                  - echo Build started on `date`
+                  - npm run build-latest
+                  - echo Build completed on `date`
+              post_build:
+                commands:
+                  - echo Build Sync to S3 on `date`
+                  - aws s3 rm s3://${self:custom.bucket-name} --recursive
+                  - aws s3 sync build/ s3://${self:custom.bucket-name}
+                  # - aws cloudfront create-invalidation --distribution-id {{!Ref CloudFrontDistro}} --paths '/*'
+            artifacts:
+              files:
+                - '**/*'
+        TimeoutInMinutes: 10
+
+    CodePipelineServiceRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: pipeline-role-development-${opt:stage}-${self:custom.randomPrefix}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - codepipeline.amazonaws.com
+                  - codebuild.amazonaws.com
+              Action: "sts:AssumeRole"
+        Path: /
+        Policies:
+          - PolicyName: pipeline-policy-development-${self:custom.randomPrefix}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "codecommit:CancelUploadArchive"
+                    - "codecommit:GetBranch"
+                    - "codecommit:GetCommit"
+                    - "codecommit:GetUploadArchiveStatus"
+                    - "codecommit:UploadArchive"
+                  Resource: !Sub "arn:aws:codecommit:*:${AWS::AccountId}:*"
+                - Effect: Allow
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:PutLogEvents"
+                  Resource:
+                    - !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/codebuild/*"
+                    - !Sub >-
+                      arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/codebuild/*:log-stream:*
+                - Effect: Allow
+                  Action:
+                    - "codebuild:BatchGetBuilds"
+                    - "codebuild:StartBuild"
+                  Resource:
+                    - !Sub >-
+                      arn:aws:codebuild:*:${AWS::AccountId}:project/Deploy-to-development-${opt:stage}-${self:custom.randomPrefix}
+                - Effect: Allow
+                  Action:
+                    - "iam:GetRole"
+                    - "iam:GetRolePolicy"
+                  Resource: !Sub "arn:aws:iam::${AWS::AccountId}*"
+                - Effect: Allow
+                  Action:
+                    - "cloudformation:CreateStack"
+                    - "cloudformation:UpdateStack"
+                    - "cloudformation:DeleteStack"
+                    - "cloudformation:Describe*"
+                    - "cloudformation:List*"
+                    - "cloudformation:Get*"
+                    - "cloudformation:PreviewStackUpdate"
+                    - "cloudformation:ValidateTemplate"
+                  Resource: !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
+                - Effect: Allow
+                  Action:
+                    - "elasticbeanstalk:*"
+                    - "ec2:*"
+                    - "elasticloadbalancing:*"
+                    - "autoscaling:*"
+                    - "cloudwatch:*"
+                    - "s3:*"
+                    - "sns:*"
+                    - "cloudformation:*"
+                    - "rds:*"
+                    - "sqs:*"
+                    - "ecs:*"
+                    - "iam:PassRole"
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:DeleteLogGroup"
+                    - "logs:DeleteLogStream"
+                    - "logs:DescribeLog*"
+                    - "logs:FilterLogEvents"
+                  Resource:
+                    - !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group::log-stream*"
+
+    AmazonCloudWatchEventRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - events.amazonaws.com
+              Action: "sts:AssumeRole"
+        Path: /
+        Policies:
+          - PolicyName: cwe-pipeline-execution-${self:custom.randomPrefix}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: "codepipeline:StartPipelineExecution"
+                  Resource: !Join
+                    - ""
+                    - - "arn:aws:codepipeline:"
+                      - !Ref "AWS::Region"
+                      - ":"
+                      - !Ref "AWS::AccountId"
+                      - ":"
+                      - !Ref CodePipeline
+    AmazonCloudWatchEventRule:
+      Type: "AWS::Events::Rule"
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - CodeCommit Repository State Change
+          resources:
+            - !Join
+              - ""
+              - - "arn:aws:codecommit:"
+                - !Ref "AWS::Region"
+                - ":"
+                - !Ref "AWS::AccountId"
+                - ":"
+                - ${self:custom.RepositoryName}
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - ${self:custom.BranchName}
+        Targets:
+          - Arn: !Join
+              - ""
+              - - "arn:aws:codepipeline:"
+                - !Ref "AWS::Region"
+                - ":"
+                - !Ref "AWS::AccountId"
+                - ":"
+                - !Ref CodePipeline
+            RoleArn: !GetAtt
+              - AmazonCloudWatchEventRole
+              - Arn
+            Id: codepipeline-CodePipeline
+
+  Outputs:
+    WebsiteURL:
+      Value: !GetAtt
+        - S3SiteBucket
+        - WebsiteURL
+      Description: URL for website hosted on S3
+    S3BucketSecureURL:
+      Value: !Join
+        - ""
+        - - "https://"
+          - !GetAtt
+            - S3SiteBucket
+            - DomainName
+      Description: Name of S3 bucket to hold website content
+    CloudFrontDistro:
+      Value: !Join
+        - ""
+        - - "https://"
+          - !GetAtt
+            - CloudFrontDistro
+            - DomainName

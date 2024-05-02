@@ -1,0 +1,30 @@
+// If you want to override variables do it here
+@import "variables";
+
+// Import CoreUI styles
+@import "~@coreui/coreui/scss/coreui.scss";
+
+// Some temp fixes
+@import "fixes";
+
+// If you want to add something do it here
+@import "custom";
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Roboto";
+  height: calc(var(--vh, 1vh) * 100);
+  width: 100vw;
+}
